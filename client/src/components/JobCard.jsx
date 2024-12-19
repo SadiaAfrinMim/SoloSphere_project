@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { format } from "date-fns";
 
 const JobCard = ({ job }) => {
-  const { title, deadline, category, min_price, max_price, description,_id } = job || {};
+  const { title, deadline, category, min_price, max_price, description,_id ,bid_count} = job || {};
   console.log(job)
 
   return (
@@ -33,7 +33,7 @@ const JobCard = ({ job }) => {
           Range: ${min_price || 'N/A'} - ${max_price || 'N/A'}
         </p>
         <p className="mt-2 text-sm font-bold text-gray-600">
-          Total Bids: {job?.totalBids || 0}
+          Total Bids: {bid_count}
         </p>
       </div>
     </Link>

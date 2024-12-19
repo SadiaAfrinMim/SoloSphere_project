@@ -23,7 +23,9 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    const consjobCollection = client.db('consjobcollection').collection('jobs')
+    const db = client.db('consjobcollection')
+    const consjobCollection = db.collection('jobs')
+    const bidCollection = db.collection('bids')
 
     app.post('/add-job',async(req,res)=>{
       const jobData = req.body
@@ -76,6 +78,73 @@ async function run() {
       
       const result = await consjobCollection.updateOne(query,update,options)
       
+      res.send(result)
+    })
+
+
+
+    // save a bid data in db
+    app.post('/add-bid',async(req,res)=>{
+      const bidData = req.body
+    // 0.if a user placed a bid already in the job
+    const query ={email: bidData.email, jobId:bidData.jobId}
+    const alreadyExist = await bidCollection.findOne(query)
+    if(alreadyExist){
+      return res
+      .status(400)
+      .send('you have already placed a bid on this job!')
+    }
+
+    // get all bid-request for a specific user
+    app.get('/bid-requests/:email',async(req,res)=>{
+      const email = req.params.email 
+      const query ={buyer:email}
+      const result = await bidCollection.find(query).toArray()
+      res.send(result)
+    })
+
+     // get all bids for a specific user
+     app.get('/bids/:email',async(req,res)=>{
+      const isBuyer = req.query.buyer
+      const email = req.params.email 
+      let query = {}
+      
+      if(isBuyer){
+        query.buyer=email
+      }
+      else{
+    query.email = email
+
+      }
+      const result = await bidCollection.find(query).toArray()
+      res.send(result)
+    })
+
+
+
+
+      // 1.save data in bids collection
+     
+      const result = await bidCollection.insertOne(bidData)
+      // 2.increase bid count in jobs collection
+      const filter = {_id: new ObjectId(bidData.jobId)}
+      const update = {
+        $inc:{bid_count:1}
+      }
+      const updateBidCount = await consjobCollection.updateOne(filter,update)
+      
+      res.send(result)
+    })
+
+
+    app.patch('/bid-status-update/:id',async(req,res)=>{
+      const id = req.params.id 
+      const status = req.body
+      const filter = {_id: new ObjectId(id)}
+      const updated = {
+        $set: {status},
+      }
+      const result = await bidCollection.updateOne(filter,updated)
       res.send(result)
     })
 
