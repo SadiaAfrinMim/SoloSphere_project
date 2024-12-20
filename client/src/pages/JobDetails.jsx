@@ -6,12 +6,12 @@ import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import { useNavigate, useParams } from 'react-router-dom'
 import { AuthContext } from '../providers/AuthProvider'
-import {toast} from 'react-hot-toast'
+import { toast } from 'react-hot-toast'
 
 
 
 const JobDetails = () => {
-  const {user} = useContext(AuthContext)
+  const { user } = useContext(AuthContext)
   const navigate = useNavigate()
   const [startDate, setStartDate] = useState(new Date())
   const { id } = useParams()
@@ -39,47 +39,47 @@ const JobDetails = () => {
     _id,
     buyer,
   } = job || {}
- const handleSubmit =async e =>{
-  e.preventDefault()
-  const form = e.target
-  const price = form.price.value;
-  const email = user?.email;
-  const comment = form.comment.value;
-  const jobId = _id;
-  // 0.cheak bid permissions validation
-  if(user?.email === buyer?.email){
-    return toast.error('Action is not permitted')
-  }
-  // 1.deadline crossed validation
-  if(compareAsc(new Date(),new Date(deadline))===1){
-    return toast.error('Deadline crossed ,bidding forbidden!')
-  }
-  
-  // 2.price within maximum price range validation
-  if(price > max_price){
-    return toast.error('offer less or atleast equal to maximum price!')
-  }
+  const handleSubmit = async e => {
+    e.preventDefault()
+    const form = e.target
+    const price = form.price.value;
+    const email = user?.email;
+    const comment = form.comment.value;
+    const jobId = _id;
+    // 0.cheak bid permissions validation
+    if (user?.email === buyer?.email) {
+      return toast.error('Action is not permitted')
+    }
+    // 1.deadline crossed validation
+    if (compareAsc(new Date(), new Date(deadline)) === 1) {
+      return toast.error('Deadline crossed ,bidding forbidden!')
+    }
 
-  // 3.offered deadline is within sellers deadline validation
-  if(compareAsc(new Date(startDate),new Date(deadline))===1){
-    return toast.error('offer a date within deadline')
-  }
-  const bidData ={price,email,comment,deadline:startDate,jobId,title,category,status:'pending',buyer: buyer?.email}
-  try{
-    await axios.post(`${import.meta.env.VITE_API_URL}/add-bid`,bidData)
-    form.reset()
-    toast.success('Bid Successfully')
-    navigate('/my-bids')
-  }
-  catch(err){
-    console.log(err)
-    toast.error(err?.response?.data)
+    // 2.price within maximum price range validation
+    if (price > max_price) {
+      return toast.error('offer less or atleast equal to maximum price!')
+    }
+
+    // 3.offered deadline is within sellers deadline validation
+    if (compareAsc(new Date(startDate), new Date(deadline)) === 1) {
+      return toast.error('offer a date within deadline')
+    }
+    const bidData = { price, email, comment, deadline: startDate, jobId, title, category, status: 'Pending', buyer: buyer?.email }
+    try {
+      await axios.post(`${import.meta.env.VITE_API_URL}/add-bid`, bidData)
+      form.reset()
+      toast.success('Bid Successfully')
+      navigate('/my-bids')
+    }
+    catch (err) {
+      console.log(err)
+      toast.error(err?.response?.data)
+
+    }
+
+
 
   }
-  
-
-
-}
   return (
     <div className='flex flex-col md:flex-row justify-around gap-5  items-center min-h-[calc(100vh-306px)] md:max-w-screen-xl mx-auto '>
       {/* Job Details */}

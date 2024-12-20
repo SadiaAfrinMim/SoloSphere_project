@@ -19,11 +19,13 @@ const MyBids = () => {
     }
   }
   console.log("bids",bids)
-  const hadleStatusChange = async(id,prevStatus,status)=>{
-    if(prevStatus === status || prevStatus === 'Completed')
+
+  const hadleStatusChange = async (id,prevStatus,status)=>{
+    if(prevStatus!=='In progress'){
       return console.log('not allow')
+    }
     try{
-      const {data}= await  await axios.get(`${import.meta.env.VITE_API_URL}/bid-status-update/${id}`)
+      const {data} =  await axios.patch(`${import.meta.env.VITE_API_URL}/bid-status-update/${id}`,{status})
       console.log(data)
       fetchAllBids()
     }
@@ -31,6 +33,7 @@ const MyBids = () => {
       console.log(err)
     }
   }
+
 
   return (
     <section className='container px-4 mx-auto my-12'>

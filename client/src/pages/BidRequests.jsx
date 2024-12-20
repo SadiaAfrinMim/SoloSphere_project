@@ -2,8 +2,13 @@ import axios from "axios"
 import { useContext, useEffect, useState } from "react"
 import { AuthContext } from "../providers/AuthProvider"
 import BidRequestTableRow from "./BidRequestTableRow"
+import toast from "react-hot-toast"
+
+
+
 
 const BidRequests = () => {
+ 
   const [bids,setBids] = useState([])
   const {user} = useContext(AuthContext)
   useEffect(() => {
@@ -12,16 +17,27 @@ const BidRequests = () => {
 
   const fetchAllBids = async () => {
     try {
-      const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/bid-requests/${user?.email}`)
+      const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/bids/${user?.email}?buyer=true`,{withCredentials: true})
       setBids(data)
     } catch (error) {
       console.error('Failed to fetch jobs:', error)
     }
   }
 
-  const hadleStatusChange = async(id,prevStatus,status)=>{
-    console.log({id,prevStatus,status})
+  const hadleStatusChange = async (id,prevStatus,status)=>{
+    if(prevStatus === status || prevStatus === 'Completed')
+      return console.log('not allow')
+    try{
+      const {data} =   await axios.patch(`${import.meta.env.VITE_API_URL}/bid-status-update/${id}`,{status})
+      toast(`status to change ${status}`)
+      console.log(data)
+      fetchAllBids()
+    }
+    catch(err){
+      console.log(err)
+    }
   }
+
   
   return (
     <section className='container px-4 mx-auto my-12'>

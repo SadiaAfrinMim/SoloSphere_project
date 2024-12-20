@@ -2,11 +2,17 @@ const express = require('express')
 const cors = require('cors')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb')
 require('dotenv').config()
+const jwt = require('jsonwebtoken')
+const cookieParser = require('cookie-parser')
 
 const port = process.env.PORT || 9000
 const app = express()
-
-app.use(cors())
+const corsOptions = {
+  origin: ['http://localhost:5173'],
+  credentials: true,
+  optionalSuccessStatus: 200,
+}
+app.use(cors(corsOptions))
 app.use(express.json())
 
 
@@ -20,6 +26,20 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 })
+const varifyToken =(req,res,next) =>{
+  const token = req.cookies?.token
+  if(!token) return res.status(401).send({message: ' unauthorized access'})
+    jwt.verify(token,process.env.SECRET_KEY,(err,decoded)=>{
+
+ 
+  if(err){
+    return res.status(401).send({message:'unauthorize access'})
+  }
+  req.user= decoded
+})
+  
+  next()
+}
 
 async function run() {
   try {
@@ -27,6 +47,30 @@ async function run() {
     const consjobCollection = db.collection('jobs')
     const bidCollection = db.collection('bids')
 
+
+    // generate jwt
+    app.post('/jwt',async(req,res)=>{
+      const email = req.body
+      // create token
+      const token=jwt.sign(email,process.env.SECRET_KEY,{expiresIn:'6h'})
+      res.cookie('token',token,{
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production'?'none':'strict',
+      }).send({success: true})
+    })
+
+    // logout || clear cookie from browser
+    app.get('/logout',async(req,res)=>{
+      res.clearCookie('token',{
+        maxAge: 0,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production'?'none':'strict',
+      }).send({success: true})
+    })
+    
+    
+  // app
     app.post('/add-job',async(req,res)=>{
       const jobData = req.body
       const result = await consjobCollection.insertOne(jobData)
@@ -103,22 +147,38 @@ async function run() {
       res.send(result)
     })
 
-     // get all bids for a specific user
-     app.get('/bids/:email',async(req,res)=>{
-      const isBuyer = req.query.buyer
-      const email = req.params.email 
-      let query = {}
-      
-      if(isBuyer){
-        query.buyer=email
-      }
-      else{
-    query.email = email
 
-      }
-      const result = await bidCollection.find(query).toArray()
-      res.send(result)
-    })
+
+
+    app.get('/bids/:email', async (req, res) => {
+      const isBuyer = req.query.buyer;
+      const email = req.params.email;
+      
+      let query = isBuyer ? { buyer: email } : { email: email };
+      
+      const result = await bidCollection.find(query).toArray();
+      res.send(result);
+  });
+  
+
+     // get all bids for a specific user
+    //  app.get('/bids/:email',async(req,res)=>{
+    //   // const decodeEmail = req.user?.email
+    //   const isBuyer = req.query.buyer
+    //   const email = req.params.email 
+    //   // if(decodeEmail !== email ) return res.status(401).send({message: ' unauthorized access'})
+    //   let query = {}
+      
+    //   if(isBuyer){
+    //     query.buyer=email
+    //   }
+    //   else{
+    // query.email = email
+
+    //   }
+    //   const result = await bidCollection.find(query).toArray()
+    //   res.send(result)
+    // })
 
 
 
@@ -139,12 +199,31 @@ async function run() {
 
     app.patch('/bid-status-update/:id',async(req,res)=>{
       const id = req.params.id 
-      const status = req.body
+      const {status} = req.body
+      console.log(status)
       const filter = {_id: new ObjectId(id)}
       const updated = {
         $set: {status},
       }
       const result = await bidCollection.updateOne(filter,updated)
+      res.send(result)
+    })
+
+    // get all jobs
+
+    app.get('/all-jobs',async(req,res)=>{
+      const filter = req.query.filter
+      const search = req.query.search
+      const sort = req.query.sort
+      let options = {}
+      if(sort) options = {sort:{deadline: sort === 'asc'?1:-1}}
+      
+      // category: filter
+      let query = {title:{
+        $regex: search,$options: 'i',
+      }}
+      if(filter) query.category = filter
+      const result = await consjobCollection.find(query,options).toArray()
       res.send(result)
     })
 
