@@ -44,7 +44,7 @@ const BidRequestTableRow = ({bid,hadleStatusChange}) => {
           <td className='px-4 py-4 text-sm whitespace-nowrap'>
             <div className='flex items-center gap-x-6'>
               <button
-              disabled={status!=='In progress'|| status==='Completed'}
+              disabled={status==='In progress'|| status==='Completed'}
               onClick={()=>hadleStatusChange(_id,status,'In progress')}  className='disabled:cursor-not-allowed text-gray-500 transition-colors duration-200   hover:text-red-500 focus:outline-none'>
                 <svg
                   xmlns='http://www.w3.org/2000/svg'
@@ -63,7 +63,7 @@ const BidRequestTableRow = ({bid,hadleStatusChange}) => {
               </button>
 
               <button
-               disabled={status!=='Rejected'|| status==='Completed'}
+               disabled={status==='Rejected'|| status==='Completed'}
               onClick={()=>hadleStatusChange(_id,status,'Rejected')}  className='disabled:cursor-not-allowed text-gray-500 transition-colors duration-200   hover:text-yellow-500 focus:outline-none'>
                 <svg
                   xmlns='http://www.w3.org/2000/svg'

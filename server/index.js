@@ -133,11 +133,26 @@ async function run() {
     // 0.if a user placed a bid already in the job
     const query ={email: bidData.email, jobId:bidData.jobId}
     const alreadyExist = await bidCollection.findOne(query)
+    console.log(alreadyExist)
     if(alreadyExist){
       return res
       .status(400)
       .send('you have already placed a bid on this job!')
     }
+       // 1.save data in bids collection
+     
+       const result = await bidCollection.insertOne(bidData)
+       // 2.increase bid count in jobs collection
+       const filter = {_id: new ObjectId(bidData.jobId)}
+       const update = {
+         $inc:{bid_count:1}
+       }
+     
+       const updateBidCount = await consjobCollection.updateOne(filter,update)
+       
+       res.send(result)
+     })
+    
 
     // get all bid-request for a specific user
     app.get('/bid-requests/:email',async(req,res)=>{
@@ -150,51 +165,41 @@ async function run() {
 
 
 
-    app.get('/bids/:email', async (req, res) => {
-      const isBuyer = req.query.buyer;
-      const email = req.params.email;
+  //   app.get('/bids/:email', async (req, res) => {
+  //    const email = req.params.email
+  //    const query = {email}
+     
       
-      let query = isBuyer ? { buyer: email } : { email: email };
-      
-      const result = await bidCollection.find(query).toArray();
-      res.send(result);
-  });
+  //     const result = await bidCollection.find(query).toArray();
+  //     res.send(result);
+  // });
   
 
-     // get all bids for a specific user
-    //  app.get('/bids/:email',async(req,res)=>{
-    //   // const decodeEmail = req.user?.email
-    //   const isBuyer = req.query.buyer
-    //   const email = req.params.email 
-    //   // if(decodeEmail !== email ) return res.status(401).send({message: ' unauthorized access'})
-    //   let query = {}
+    //  get all bids for a specific user
+     app.get('/bids/:email',async(req,res)=>{
+      // const decodeEmail = req.user?.email
+      const isBuyer = req.query.buyer
+      const email = req.params.email 
+      // if(decodeEmail !== email ) return res.status(401).send({message: ' unauthorized access'})
+      let query = {}
       
-    //   if(isBuyer){
-    //     query.buyer=email
-    //   }
-    //   else{
-    // query.email = email
-
-    //   }
-    //   const result = await bidCollection.find(query).toArray()
-    //   res.send(result)
-    // })
-
-
-
-
-      // 1.save data in bids collection
-     
-      const result = await bidCollection.insertOne(bidData)
-      // 2.increase bid count in jobs collection
-      const filter = {_id: new ObjectId(bidData.jobId)}
-      const update = {
-        $inc:{bid_count:1}
+      if(isBuyer){
+        query.buyer=email
       }
-      const updateBidCount = await consjobCollection.updateOne(filter,update)
-      
+      else{
+    query.email = email
+
+      }
+      const result = await bidCollection.find(query).toArray()
       res.send(result)
     })
+
+
+
+
+     
+
+ 
 
 
     app.patch('/bid-status-update/:id',async(req,res)=>{

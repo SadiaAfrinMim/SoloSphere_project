@@ -17,7 +17,7 @@ const BidRequests = () => {
 
   const fetchAllBids = async () => {
     try {
-      const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/bids/${user?.email}?buyer=true`,{withCredentials: true})
+      const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/bids/${user?.email}?buyer=true`) //?buyer=true
       setBids(data)
     } catch (error) {
       console.error('Failed to fetch jobs:', error)
